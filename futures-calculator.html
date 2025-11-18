@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Futures Position Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+            padding: 30px;
+            animation: slideIn 0.5s ease-out;
+            overflow-x: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #2d3436;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                margin-bottom: 5px;
+            }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #636e72;
+            margin-bottom: 30px;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+        }
+
+        @media (max-width: 768px) {
+            .subtitle {
+                margin-bottom: 20px;
+            }
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        .input-section, .output-section {
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .input-section, .output-section {
+                padding: 15px;
+                border-radius: 12px;
+            }
+        }
+
+        .input-section {
+            background: #f8f9fa;
+        }
+
+        .output-section {
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            border: 2px solid #667eea30;
+        }
+
+        .section-title {
+            color: #2d3436;
+            margin-bottom: 20px;
+            font-size: clamp(1.1rem, 3.5vw, 1.3rem);
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .section-title {
+                margin-bottom: 15px;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .form-group {
+                margin-bottom: 15px;
+            }
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 500;
+            font-size: clamp(0.9rem, 2.5vw, 0.95rem);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        @media (max-width: 768px) {
+            input, select {
+                padding: 16px 15px;
+                border-radius: 8px;
+            }
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            padding-right: 40px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+        }
+
+        .input-addon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #636e72;
+            font-weight: 500;
+        }
+
+        .position-type-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .position-type-selector {
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+        }
+
+        .position-type-btn {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #e0e6ed;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: clamp(0.95rem, 2.5vw, 1rem);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 768px) {
+            .position-type-btn {
+                padding: 16px 12px;
+                border-radius: 8px;
+            }
+        }
+
+        .position-type-btn:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .position-type-btn.active.long {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            border-color: #00b894;
+        }
+
+        .position-type-btn.active.short {
+            background: linear-gradient(135deg, #d63031, #ff6b6b);
+            color: white;
+            border-color: #d63031;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: clamp(1rem, 3vw, 1.1rem);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        @media (max-width: 768px) {
+            .calculate-btn {
+                padding: 18px;
+                border-radius: 8px;
+                margin-top: 15px;
+            }
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        @media (hover: none) {
+            .calculate-btn:hover {
+                transform: none;
+            }
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+            background: linear-gradient(135deg, #5a6fda, #6a4192);
+        }
+
+        .result-item {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .result-item {
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 10px;
+            }
+        }
+
+        .result-label {
+            font-size: clamp(0.85rem, 2.5vw, 0.9rem);
+            color: #636e72;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: clamp(1.4rem, 4vw, 1.8rem);
+            font-weight: 700;
+            color: #2d3436;
+            word-break: break-all;
+        }
+
+        .result-value.profit {
+            color: #00b894;
+        }
+
+        .result-value.loss {
+            color: #d63031;
+        }
+
+        .info-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge-long {
+            background: #00b89415;
+            color: #00b894;
+        }
+
+        .badge-short {
+            background: #d6303115;
+            color: #d63031;
+        }
+
+        .warning-message {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .additional-info {
+            margin-top: 20px;
+            padding: 18px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .additional-info {
+                margin-top: 15px;
+                padding: 15px;
+                border-radius: 8px;
+            }
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 480px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .info-item {
+                padding: 10px;
+            }
+        }
+
+        .info-label {
+            color: #636e72;
+            font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #2d3436;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            text-align: right;
+        }
+
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+            cursor: help;
+        }
+
+        .tooltip-icon {
+            background: #e0e6ed;
+            color: #636e72;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #2d3436;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (max-width: 768px) {
+            .tooltip-text {
+                width: 200px;
+                margin-left: -100px;
+                font-size: 0.8rem;
+                padding: 8px;
+            }
+        }
+
+        @media (hover: hover) {
+            .tooltip:hover .tooltip-text {
+                visibility: visible;
+                opacity: 1;
+            }
+        }
+
+        .tooltip:active .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Futures Position Calculator</h1>
+        <p class="subtitle">Calculate your optimal position size and targets with precision</p>
+
+        <div class="calculator-grid">
+            <div class="input-section">
+                <h2 class="section-title">📊 Position Details</h2>
+
+                <div class="form-group">
+                    <label for="asset">
+                        Select Asset
+                        <span class="tooltip">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">Choose the futures contract you want to trade. Each has different contract sizes and tick values.</span>
+                        </span>
+                    </label>
+                    <select id="asset">
+                        <option value="custom">Custom Asset</option>
+                        <option value="MES">Micro E-mini S&P 500 (MES)</option>
+                        <option value="ES">E-mini S&P 500 (ES)</option>
+                        <option value="MNQ">Micro E-mini Nasdaq 100 (MNQ)</option>
+                        <option value="NQ">E-mini Nasdaq 100 (NQ)</option>
+                        <option value="MGC">Micro Gold (MGC)</option>
+                        <option value="GC">Gold (GC)</option>
+                        <option value="CL">Crude Oil (CL)</option>
+                        <option value="6E">Euro FX (6E)</option>
+                        <option value="BTC">Bitcoin Futures (BTC)</option>
+                        <option value="ETH">Ethereum Futures (ETH)</option>
+                        <option value="ZB">30-Year Treasury Bond (ZB)</option>
+                        <option value="ZN">10-Year Treasury Note (ZN)</option>
+                        <option value="ZC">Corn (ZC)</option>
+                        <option value="ZS">Soybeans (ZS)</option>
+                        <option value="ZW">Wheat (ZW)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="customAssetGroup" style="display: none;">
+                    <label for="tickValue">
+                        Tick Value ($)
+                        <span class="tooltip">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">The dollar value of one minimum price movement (tick) for this contract.</span>
+                        </span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="tickValue" placeholder="Enter tick value" step="0.01">
+                    </div>
+                </div>
+
+                <div class="form-group" id="customTickSizeGroup" style="display: none;">
+                    <label for="tickSize">
+                        Tick Size
+                        <span class="tooltip">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">The minimum price movement for this contract (e.g., 0.25 for ES, 1 for CL).</span>
+                        </span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="tickSize" placeholder="Enter tick size" step="0.0001">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Position Type</label>
+                    <div class="position-type-selector">
+                        <button class="position-type-btn active long" data-type="long">📈 LONG</button>
+                        <button class="position-type-btn" data-type="short">📉 SHORT</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="entry">
+                        Entry Price
+                        <span class="tooltip">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">The price at which you plan to enter the position.</span>
+                        </span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="entry" placeholder="Enter entry price" step="0.01">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="stopLoss">
+                        Stop Loss Price
+                        <span class="tooltip">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">The price at which you'll exit to limit your loss.</span>
+                        </span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="stopLoss" placeholder="Enter stop loss price" step="0.01">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="risk">
+                        Risk Amount ($)
+                        <span class="tooltip">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">The maximum dollar amount you're willing to lose on this trade.</span>
+                        </span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="risk" placeholder="Enter risk amount" step="1">
+                        <span class="input-addon">$</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="takeProfit">
+                        Take Profit Target ($)
+                        <span class="tooltip">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">Your desired profit in dollars. The calculator will show you the price level.</span>
+                        </span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" id="takeProfit" placeholder="Enter profit target in dollars" step="1">
+                        <span class="input-addon">$</span>
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="calculatePosition()">
+                    Calculate Position 🎯
+                </button>
+
+                <div class="warning-message" id="warningMessage"></div>
+            </div>
+
+            <div class="output-section">
+                <h2 class="section-title">📈 Calculation Results</h2>
+
+                <div class="result-item">
+                    <div class="result-label">Position Type</div>
+                    <div class="result-value" id="positionTypeResult">
+                        -
+                        <span class="info-badge badge-long" id="positionBadge" style="display: none;"></span>
+                    </div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">Number of Contracts</div>
+                    <div class="result-value" id="contractsResult">-</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">Take Profit Price</div>
+                    <div class="result-value profit" id="takeProfitPriceResult">-</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">Total Profit Target</div>
+                    <div class="result-value profit" id="totalProfitResult">-</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">Stop Loss Distance</div>
+                    <div class="result-value loss" id="stopLossDistanceResult">-</div>
+                </div>
+
+                <div class="additional-info">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: #2d3436;">Additional Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Risk per Contract:</span>
+                            <span class="info-value" id="riskPerContract">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Profit per Contract:</span>
+                            <span class="info-value" id="profitPerContract">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total Position Value:</span>
+                            <span class="info-value" id="positionValue">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Risk/Reward Ratio:</span>
+                            <span class="info-value" id="rrRatio">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Break Even Price:</span>
+                            <span class="info-value" id="breakEven">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Max Loss:</span>
+                            <span class="info-value" id="maxLoss" style="color: #d63031;">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Asset specifications
+        const assetSpecs = {
+            'MES': { tickValue: 1.25, tickSize: 0.25, name: 'Micro E-mini S&P 500' },
+            'ES': { tickValue: 12.50, tickSize: 0.25, name: 'E-mini S&P 500' },
+            'MNQ': { tickValue: 0.50, tickSize: 0.25, name: 'Micro E-mini Nasdaq 100' },
+            'NQ': { tickValue: 5.00, tickSize: 0.25, name: 'E-mini Nasdaq 100' },
+            'MGC': { tickValue: 1.00, tickSize: 0.10, name: 'Micro Gold' },
+            'GC': { tickValue: 10.00, tickSize: 0.10, name: 'Gold' },
+            'CL': { tickValue: 10.00, tickSize: 0.01, name: 'Crude Oil' },
+            '6E': { tickValue: 12.50, tickSize: 0.00005, name: 'Euro FX' },
+            'BTC': { tickValue: 25.00, tickSize: 5.00, name: 'Bitcoin Futures' },
+            'ETH': { tickValue: 10.00, tickSize: 0.05, name: 'Ethereum Futures' },
+            'ZB': { tickValue: 31.25, tickSize: 0.03125, name: '30-Year T-Bond' },
+            'ZN': { tickValue: 15.625, tickSize: 0.015625, name: '10-Year T-Note' },
+            'ZC': { tickValue: 12.50, tickSize: 0.25, name: 'Corn' },
+            'ZS': { tickValue: 12.50, tickSize: 0.25, name: 'Soybeans' },
+            'ZW': { tickValue: 12.50, tickSize: 0.25, name: 'Wheat' }
+        };
+
+        let positionType = 'long';
+
+        // Position type selector
+        document.querySelectorAll('.position-type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.position-type-btn').forEach(b => {
+                    b.classList.remove('active', 'long', 'short');
+                });
+                this.classList.add('active', this.dataset.type);
+                positionType = this.dataset.type;
+            });
+        });
+
+        // Asset selector change
+        document.getElementById('asset').addEventListener('change', function() {
+            const customGroup = document.getElementById('customAssetGroup');
+            const customTickSizeGroup = document.getElementById('customTickSizeGroup');
+
+            if (this.value === 'custom') {
+                customGroup.style.display = 'block';
+                customTickSizeGroup.style.display = 'block';
+            } else {
+                customGroup.style.display = 'none';
+                customTickSizeGroup.style.display = 'none';
+            }
+        });
+
+
+        function validateInputs() {
+            const entry = parseFloat(document.getElementById('entry').value);
+            const stopLoss = parseFloat(document.getElementById('stopLoss').value);
+            const risk = parseFloat(document.getElementById('risk').value);
+            const warningDiv = document.getElementById('warningMessage');
+
+            warningDiv.style.display = 'none';
+            warningDiv.textContent = '';
+
+            if (!entry || !stopLoss || !risk) {
+                warningDiv.textContent = '⚠️ Please fill in all required fields (Entry, Stop Loss, and Risk Amount)';
+                warningDiv.style.display = 'block';
+                return false;
+            }
+
+            if (risk <= 0) {
+                warningDiv.textContent = '⚠️ Risk amount must be greater than 0';
+                warningDiv.style.display = 'block';
+                return false;
+            }
+
+            // Validate position logic
+            if (positionType === 'long' && stopLoss >= entry) {
+                warningDiv.textContent = '⚠️ For a LONG position, Stop Loss must be below Entry Price';
+                warningDiv.style.display = 'block';
+                return false;
+            }
+
+            if (positionType === 'short' && stopLoss <= entry) {
+                warningDiv.textContent = '⚠️ For a SHORT position, Stop Loss must be above Entry Price';
+                warningDiv.style.display = 'block';
+                return false;
+            }
+
+            return true;
+        }
+
+        function calculatePosition() {
+            if (!validateInputs()) {
+                return;
+            }
+
+            const assetSelect = document.getElementById('asset').value;
+            const entry = parseFloat(document.getElementById('entry').value);
+            const stopLoss = parseFloat(document.getElementById('stopLoss').value);
+            const risk = parseFloat(document.getElementById('risk').value);
+            const takeProfitDollars = parseFloat(document.getElementById('takeProfit').value) || risk * 2; // Default to 1:2 R:R if not specified
+
+            let tickValue, tickSize;
+
+            if (assetSelect === 'custom') {
+                tickValue = parseFloat(document.getElementById('tickValue').value);
+                tickSize = parseFloat(document.getElementById('tickSize').value);
+
+                if (!tickValue || !tickSize) {
+                    document.getElementById('warningMessage').textContent = '⚠️ Please enter tick value and tick size for custom asset';
+                    document.getElementById('warningMessage').style.display = 'block';
+                    return;
+                }
+            } else {
+                tickValue = assetSpecs[assetSelect].tickValue;
+                tickSize = assetSpecs[assetSelect].tickSize;
+            }
+
+            // Calculate stop loss distance in points
+            const stopLossDistance = Math.abs(entry - stopLoss);
+
+            // Calculate number of ticks in stop loss distance
+            const ticksInStopLoss = stopLossDistance / tickSize;
+
+            // Calculate risk per contract
+            const riskPerContract = ticksInStopLoss * tickValue;
+
+            // Calculate number of contracts (rounded down for safety)
+            const numberOfContracts = Math.floor(risk / riskPerContract);
+
+            // Calculate profit per contract and take profit price
+            const profitPerContract = takeProfitDollars / numberOfContracts;
+
+            // Calculate ticks needed for take profit
+            const ticksForTakeProfit = profitPerContract / tickValue;
+
+            // Calculate take profit distance
+            const takeProfitDistance = ticksForTakeProfit * tickSize;
+
+            // Calculate take profit price based on position type
+            let takeProfitPrice;
+            if (positionType === 'long' || entry > stopLoss) {
+                takeProfitPrice = entry + takeProfitDistance;
+            } else {
+                takeProfitPrice = entry - takeProfitDistance;
+            }
+
+            // Determine position type automatically (double-check)
+            const actualPositionType = entry > stopLoss ? 'long' : 'short';
+
+            // Update results
+            const positionTypeDiv = document.getElementById('positionTypeResult');
+            positionTypeDiv.innerHTML = actualPositionType.toUpperCase() +
+                ' <span class="info-badge badge-' + actualPositionType + '" id="positionBadge">' +
+                (actualPositionType === 'long' ? '📈 Bullish' : '📉 Bearish') + '</span>';
+
+            document.getElementById('contractsResult').textContent = numberOfContracts;
+            document.getElementById('takeProfitPriceResult').textContent = takeProfitPrice.toFixed(4);
+            document.getElementById('totalProfitResult').textContent = '$' + takeProfitDollars.toFixed(2);
+            document.getElementById('stopLossDistanceResult').textContent = stopLossDistance.toFixed(4) + ' points';
+
+            // Additional information
+            document.getElementById('riskPerContract').textContent = '$' + riskPerContract.toFixed(2);
+            document.getElementById('profitPerContract').textContent = '$' + profitPerContract.toFixed(2);
+            document.getElementById('positionValue').textContent = '$' + (entry * numberOfContracts * tickValue / tickSize).toFixed(2);
+            document.getElementById('rrRatio').textContent = '1:' + (takeProfitDollars / risk).toFixed(2);
+            document.getElementById('breakEven').textContent = entry.toFixed(4);
+            document.getElementById('maxLoss').textContent = '-$' + risk.toFixed(2);
+
+            // Show warning if contracts = 0
+            if (numberOfContracts === 0) {
+                const warningDiv = document.getElementById('warningMessage');
+                warningDiv.textContent = '⚠️ Risk amount too small for even 1 contract. Increase risk or tighten stop loss.';
+                warningDiv.style.display = 'block';
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize with custom asset selected
+            document.getElementById('asset').value = 'custom';
+            document.getElementById('customAssetGroup').style.display = 'block';
+            document.getElementById('customTickSizeGroup').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
